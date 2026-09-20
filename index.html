@@ -104,7 +104,7 @@
       }
 
       // Tampilkan data lokal jika ada
-      if (dataID.length > 0 || dataEN.length > 0) {
+      if ((dataID && dataID.length > 0) || (dataEN && dataEN.length > 0)) {
         updateStatus("Displaying cached data from LocalStorage.");
         renderResults();
       }
@@ -120,22 +120,27 @@
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        console.log("Response dari API:", data);
+        console.log("Raw Response dari API:", data);
 
-        if (data && !data.error) {
-          // Ambil array dari respons
+        // Kasus A: Jika API mengembalikan format Objek { Indonesia: [...], English: [...] }
+        if (data && (data.Indonesia || data.English)) {
           dataID = data.Indonesia || [];
           dataEN = data.English || [];
-
-          // SIMPAN KE MASING-MASING KEY LOCALSTORAGE
-          localStorage.setItem(KEY_ID, JSON.stringify(dataID));
-          localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
-
-          updateStatus("Data synced and saved to separate LocalStorage keys.");
-          renderResults();
-        } else if (data.error) {
-          updateStatus("Server Error: " + data.error);
+        } 
+        // Kasus B: Jika API masih versi lama (Array langsung)
+        else if (Array.isArray(data)) {
+          console.warn("API mengembalikan Array tunggal. Menggunakan array sebagai fallback.");
+          dataEN = data;
+          dataID = data;
         }
+
+        // SIMPAN KEDUA DATA KE LOCALSTORAGE SECARA TERPISAH
+        localStorage.setItem(KEY_ID, JSON.stringify(dataID));
+        localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
+
+        updateStatus("Data synced & saved to separate LocalStorage keys.");
+        renderResults();
+
       } catch (err) {
         console.error("Fetch Error:", err);
         if (localStorage.getItem(KEY_ID) || localStorage.getItem(KEY_EN)) {
@@ -152,6 +157,11 @@
       
       // Tentukan sumber data berdasarkan bahasa aktif saat ini
       const activeData = (currentLang === "English") ? dataEN : dataID;
+
+      if (!Array.isArray(activeData)) {
+        resultsEl.innerHTML = "<li class='no-data'>Data format error.</li>";
+        return;
+      }
 
       // Jika keyword kosong, tampilkan SEMUA data dari sheet bahasa yang aktif
       const filtered = activeData.filter(row => {
