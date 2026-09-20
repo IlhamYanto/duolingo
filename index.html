@@ -10,7 +10,7 @@
   <ul id="results"></ul>
 
   <script>
-    const API_URL = "PASTE_WEB_APP_URL_HERE"; // ganti dengan URL Web App
+    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; // ganti dengan URL Web App
 
     async function loadData(keyword="") {
       const res = await fetch(API_URL + "?q=" + encodeURIComponent(keyword));
