@@ -1,28 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Finder English</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finder Q&A</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+    .header-tools {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .toggle-btn {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      border: 1px solid #007bff;
+      background-color: #f8f9fa;
+      color: #007bff;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .toggle-btn:hover {
+      background-color: #007bff;
+      color: #fff;
+    }
+    #search {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #status {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    li:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
 </head>
 <body>
-  <h2>Search English Q&A</h2>
-  <input type="text" id="search" placeholder="Type keyword...">
+
+  <div class="header-tools">
+    <h2 id="title">Search Q&A</h2>
+    <button id="langToggle" class="toggle-btn">Bahasa: Indonesia</button>
+  </div>
+
+  <input type="text" id="search" placeholder="Ketik kata kunci...">
+  <div id="status">Memuat data...</div>
+
   <ul id="results"></ul>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; // ganti dengan URL Web App
+    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; // Ganti dengan URL Web App Anda
+    const STORAGE_KEY = "spreadsheet_qa_data";
 
-    async function loadData(keyword="") {
-      const res = await fetch(API_URL + "?q=" + encodeURIComponent(keyword));
-      return await res.json();
+    // State aplikasi
+    let currentLang = "Indonesia"; // 'Indonesia' atau 'English'
+    let allData = { Indonesia: [], English: [] };
+
+    // Executed saat document ready
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 1. Load data dari LocalStorage terlebih dahulu agar UI cepat tampil
+      const localData = localStorage.getItem(STORAGE_KEY);
+      if (localData) {
+        try {
+          allData = JSON.parse(localData);
+          updateStatus("Menampilkan data lokal.");
+          renderResults();
+        } catch (e) {
+          console.error("Gagal parse localStorage", e);
+        }
+      }
+
+      // 2. Timpa / Sync dengan data terbaru dari Google Sheets (Background fetch & reload)
+      await fetchAndSyncData();
+    });
+
+    // Ambil data terbaru dari API dan timpa localStorage
+    async function fetchAndSyncData() {
+      updateStatus("Memperbarui data dari Spreadsheet...");
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        if (data && (data.Indonesia || data.English)) {
+          allData = data;
+          // Timpa data lama di localStorage dengan yang baru
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+          updateStatus("Data berhasil diperbarui.");
+          renderResults();
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data dari API:", err);
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          updateStatus("Gagal memuat data. Periksa koneksi internet.");
+        } else {
+          updateStatus("Menggunakan data cache (Gagal terhubung ke server).");
+        }
+      }
     }
 
-    document.getElementById("search").addEventListener("keyup", async function() {
-      const keyword = this.value;
-      const data = await loadData(keyword);
-      document.getElementById("results").innerHTML =
-        data.map(r => `<li>${r[0]} - ${r[1]} - ${r[2]}</li>`).join("");
+    // Fungsi Render/Search
+    function renderResults() {
+      const keyword = document.getElementById("search").value.toLowerCase().trim();
+      const activeData = allData[currentLang] || [];
+
+      // Filter berdasarkan kata kunci di seluruh kolom
+      const filtered = activeData.filter(row => {
+        if (!keyword) return true;
+        return row.some(cell => String(cell).toLowerCase().includes(keyword));
+      });
+
+      // Render ke DOM
+      const resultsEl = document.getElementById("results");
+      if (filtered.length === 0) {
+        resultsEl.innerHTML = "<li>Tidak ada data ditemukan.</li>";
+        return;
+      }
+
+      resultsEl.innerHTML = filtered
+        .map(r => `<li>${r.filter(Boolean).join(" - ")}</li>`)
+        .join("");
+    }
+
+    // Event Listener untuk Search (Instant filter lokal)
+    document.getElementById("search").addEventListener("input", renderResults);
+
+    // Event Listener untuk Toggle Bahasa
+    document.getElementById("langToggle").addEventListener("click", function() {
+      if (currentLang === "Indonesia") {
+        currentLang = "English";
+        this.innerText = "Language: English";
+        document.getElementById("search").placeholder = "Type keyword...";
+      } else {
+        currentLang = "Indonesia";
+        this.innerText = "Bahasa: Indonesia";
+        document.getElementById("search").placeholder = "Ketik kata kunci...";
+      }
+      renderResults();
     });
+
+    function updateStatus(msg) {
+      document.getElementById("status").innerText = msg;
+    }
   </script>
 </body>
 </html>
