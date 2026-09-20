@@ -48,7 +48,7 @@
       color: #fff;
     }
 
-    /* Container Input Search & Tombol Clear X */
+    /* Container Input Search & Tombol Clear X Lebar */
     .search-container {
       position: relative;
       width: 100%;
@@ -56,24 +56,26 @@
     }
     #search {
       width: 100%;
-      padding: 10px 35px 10px 10px;
+      padding: 10px 48px 10px 12px; /* Diberi ruang kanan 48px agar tidak tertimpa tombol X */
       font-size: 16px;
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
+
+    /* Tombol X Clear Lebih Lebar & Cepat Diklik */
     .clear-btn {
       position: absolute;
-      right: 10px;
+      right: 6px;
       top: 50%;
       transform: translateY(-50%);
       border: none;
       background: #ccc;
-      color: #fff;
+      color: #333;
       font-weight: bold;
-      font-size: 14px;
-      width: 20px;
-      height: 20px;
+      font-size: 18px;
+      width: 32px;  /* Dibuat lebih lebar */
+      height: 32px; /* Dibuat lebih tinggi */
       border-radius: 50%;
       cursor: pointer;
       display: none;
@@ -81,9 +83,15 @@
       justify-content: center;
       line-height: 1;
       padding: 0;
+      transition: background 0.2s, color 0.2s;
     }
     .clear-btn:hover {
-      background: #999;
+      background: #888;
+      color: #fff;
+    }
+    .clear-btn:active {
+      background: #555;
+      color: #fff;
     }
 
     #status {
@@ -146,7 +154,7 @@
     <button id="langToggle" class="toggle-btn">Language: English</button>
   </div>
 
-  <!-- Search Box dengan Tombol X Clear -->
+  <!-- Search Box dengan Tombol X Clear Lebar -->
   <div class="search-container">
     <input type="text" id="search" placeholder="Type keywords (e.g. ba mor)...">
     <button id="clearSearch" class="clear-btn" aria-label="Clear search">&times;</button>
