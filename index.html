@@ -78,88 +78,89 @@
   <ul id="results"></ul>
 
   <script>
-    // Ganti URL ini dengan URL Web App Apps Script milik Anda
     const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; 
     const STORAGE_KEY = "spreadsheet_qa_data";
 
     // State Aplikasi
-    let currentLang = "Indonesia"; // 'Indonesia' atau 'English'
+    let currentLang = "Indonesia"; // Default awal
     let allData = { Indonesia: [], English: [] };
 
-    // Dijalankan saat document / DOM siap
+    // Executed saat DOM Ready
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Load data dari LocalStorage terlebih dahulu (jika ada)
+      // 1. Baca dari localStorage terlebih dahulu (jika ada)
       const localData = localStorage.getItem(STORAGE_KEY);
       if (localData) {
         try {
           allData = JSON.parse(localData);
           updateStatus("Menampilkan data dari LocalStorage.");
-          renderResults();
+          renderResults(); // Langsung render semua data sesuai bahasa
         } catch (e) {
           console.error("Gagal parse localStorage:", e);
         }
       }
 
-      // 2. Ambil data terbaru dari Spreadsheet (Background Fetch) lalu timpa LocalStorage
+      // 2. Fetch data terbaru dari Apps Script & Timpa LocalStorage
       await fetchAndSyncData();
     });
 
-    // Ambil data terbaru dari Apps Script & Simpan ke LocalStorage
+    // Ambil data dari Apps Script
     async function fetchAndSyncData() {
       updateStatus("Memperbarui data dari Spreadsheet...");
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        console.log("Data diterima dari API:", data);
+        console.log("Data yang didapat dari server:", data);
 
-        // Validasi data tidak kosong
-        if (data && !data.error) {
+        // Jika respons berupa array (berarti Apps Script lama), bungkus manual
+        if (Array.isArray(data)) {
+          allData = { Indonesia: data, English: data };
+        } else if (data && !data.error) {
           allData = data;
-
-          // TIMPA LOCALSTORAGE DENGAN DATA BARU
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          
-          updateStatus("Data berhasil tersimpan di LocalStorage & siap digunakan.");
-          renderResults();
-        } else if (data.error) {
-          console.error("Server Apps Script Error:", data.error);
-          updateStatus("Error dari server: " + data.error);
         }
+
+        // Timpa ke LocalStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+        updateStatus("Data berhasil tersimpan & diperbarui.");
+        
+        // Render ulang UI
+        renderResults();
+
       } catch (err) {
-        console.error("Gagal fetch dari API:", err);
+        console.error("Gagal sync data:", err);
         if (localStorage.getItem(STORAGE_KEY)) {
-          updateStatus("Offline/Gagal sync. Menggunakan data cache LocalStorage.");
+          updateStatus("Offline. Menggunakan data cache LocalStorage.");
         } else {
           updateStatus("Gagal memuat data dari server.");
         }
       }
     }
 
-    // Fungsi Render Hasil Pencarian
+    // Fungsi Render Hasil (Tampilkan Semua jika keyword kosong)
     function renderResults() {
       const keyword = document.getElementById("search").value.toLowerCase().trim();
       const activeData = allData[currentLang] || [];
 
-      // Filtering pencarian lokal di array
+      // Jika keyword kosong, tampilkan seluruh data sheet yang aktif
       const filtered = activeData.filter(row => {
-        if (!keyword) return true;
+        if (!keyword) return true; 
         return row.some(cell => String(cell).toLowerCase().includes(keyword));
       });
 
-      // Render ke DOM
       const resultsEl = document.getElementById("results");
+
       if (filtered.length === 0) {
         resultsEl.innerHTML = "<li class='no-data'>Tidak ada data ditemukan.</li>";
         return;
       }
 
+      // Render daftar item
       resultsEl.innerHTML = filtered
         .map(r => `<li>${r.filter(Boolean).join(" - ")}</li>`)
         .join("");
     }
 
-    // Event Listener Input Keyword (Search Instan)
+    // Event Listener Search (Pencarian Instant)
     document.getElementById("search").addEventListener("input", renderResults);
 
     // Event Listener Toggle Bahasa
@@ -173,6 +174,7 @@
         this.innerText = "Bahasa: Indonesia";
         document.getElementById("search").placeholder = "Ketik kata kunci...";
       }
+      // Render ulang seluruh data sesuai bahasa yang dipilih
       renderResults();
     });
 
