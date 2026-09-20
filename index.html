@@ -85,6 +85,10 @@
       font-weight: 600;
       color: #d9534f;
     }
+    .highlight-brawler {
+      font-weight: 600;
+      color: #6f42c1;
+    }
   </style>
 </head>
 <body>
@@ -94,7 +98,7 @@
     <button id="langToggle" class="toggle-btn">Language: English</button>
   </div>
 
-  <input type="text" id="search" placeholder="Type keywords (e.g. Spike Nita)...">
+  <input type="text" id="search" placeholder="Type keywords (e.g. ba mor)...">
   <div id="status">Loading data...</div>
 
   <ul id="results"></ul>
@@ -113,20 +117,29 @@
     let dataID = DEFAULT_DATA.Indonesia;
     let dataEN = DEFAULT_DATA.English;
 
-    // Daftar nama bahasa untuk auto-highlighting di pertanyaan
+    // Daftar nama Bahasa & Negara LENGKAP (Indo & English)
     const LANGUAGES = [
       "Indonesia", "Inggris", "Prancis", "Spanyol", "Rusia", "Turki", "Mandarin", 
       "Korea", "Finlandia", "Slovenia", "Wabing", "Jepang", "Italia", "Arab", 
       "Polandia", "Belanda", "Hungaria", "Ibrani", "Islandia", "Swahili", "Wales", 
       "Portugis", "Tagalog", "Hawaii", "Hindi", "Norwegia", "Irlandia", "Persia", 
-      "Thailand", "Ukraina", "Melayu", "English", "German", "French", "Spanish", 
-      "Russian", "Turkish", "Chinese", "Japanese", "Italian", "Arabic", "Polish", 
-      "Dutch", "Hungarian", "Hebrew", "Icelandic", "Portuguese", "Swedish", 
-      "Greek", "Vietnamese", "Welsh", "Thai"
+      "Thailand", "Ukraina", "Melayu", "Brasil", "Brazil", "Yunani", "Swedia", "Jerman", "Vietnam",
+      "English", "German", "French", "Spanish", "Russian", "Turkish", "Chinese", 
+      "Japanese", "Italian", "Arabic", "Polish", "Dutch", "Hungarian", "Hebrew", 
+      "Icelandic", "Portuguese", "Swedish", "Greek", "Vietnamese", "Welsh", "Thai",
+      "Finnish", "Indonesian", "Irish", "Korean", "Malay", "Norwegian", "Persian", "Slovenian", "Ukrainian"
+    ];
+
+    // Daftar Brawler & Karakter Game
+    const BRAWLERS = [
+      "Spike", "Gene", "Rico", "Ricochet", "Edgar", "Mortis", "Dynamike", "Shelly", 
+      "Brock", "Nita", "Bibi", "Poco", "Pam", "Darryl", "Chester", "Melody", 
+      "Janet", "Jessie", "Duo", "Scrappy", "Cordelius", "Lily", "Trunk"
     ];
 
     // Regex Dinamis
     const langRegex = new RegExp(`\\b(${LANGUAGES.join("|")})\\b`, "gi");
+    const brawlerRegex = new RegExp(`\\b(${BRAWLERS.join("|")})\\b`, "gi");
     const quoteRegex = /(['"ʿ‘«“].*?['"ʾ’»”])/g;
 
     document.addEventListener("DOMContentLoaded", async () => {
@@ -174,10 +187,11 @@
       if (!qText) return "";
       let formatted = String(qText).replace(quoteRegex, `<span class="highlight-quote">$1</span>`);
       formatted = formatted.replace(langRegex, `<span class="highlight-lang">$1</span>`);
+      formatted = formatted.replace(brawlerRegex, `<span class="highlight-brawler">$1</span>`);
       return formatted;
     }
 
-    // Render Hasil Pencarian (dengan Pencarian Multi-Kata / Elastic-style OR)
+    // Render Hasil Pencarian (dengan Elastic Search - Partial Match OR)
     function renderResults() {
       const inputVal = document.getElementById("search").value.toLowerCase().trim();
       const activeData = (currentLang === "English") ? dataEN : dataID;
@@ -188,7 +202,7 @@
         return;
       }
 
-      // Pecah input menjadi array kata kunci (abaikan spasi ganda)
+      // Pecah input pencarian menjadi potongan kata/karakter (abaikan spasi ganda)
       const keywords = inputVal.split(/\s+/).filter(k => k.length > 0);
 
       // Filter Data
@@ -199,10 +213,11 @@
         // Jika input pencarian kosong, tampilkan semua baris
         if (keywords.length === 0) return true;
 
-        // Gabungkan seluruh sel dalam satu baris menjadi satu string untuk dicocokkan
+        // Gabungkan seluruh sel dalam satu baris menjadi satu string kecil untuk pencarian substring
         const rowText = row.join(" ").toLowerCase();
 
-        // LOGIKA OR: Tampilkan jika minimal SALAH SATU kata kunci cocok
+        // ELASTIC-STYLE LOGIKA OR (Partial / Substring Match):
+        // Tampilkan jika minimal SALAH SATU potongan kata kunci (misal "ba" atau "mor") cocok dalam row
         return keywords.some(keyword => rowText.includes(keyword));
       });
 
@@ -232,11 +247,11 @@
       if (currentLang === "English") {
         currentLang = "Indonesia";
         this.innerText = "Bahasa: Indonesia";
-        document.getElementById("search").placeholder = "Ketik kata kunci (cth: Spike Nita)...";
+        document.getElementById("search").placeholder = "Ketik kata kunci (cth: ba mor)...";
       } else {
         currentLang = "English";
         this.innerText = "Language: English";
-        document.getElementById("search").placeholder = "Type keywords (e.g. Spike Nita)...";
+        document.getElementById("search").placeholder = "Type keywords (e.g. ba mor)...";
       }
       renderResults();
     });
