@@ -7,9 +7,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 650px;
       margin: 30px auto;
       padding: 0 15px;
+      color: #333;
     }
     .header-tools {
       display: flex;
@@ -36,32 +37,38 @@
       padding: 10px;
       font-size: 16px;
       box-sizing: border-box;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
     #status {
       font-size: 12px;
       color: #666;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     ul {
       list-style-type: none;
       padding: 0;
+      margin: 0;
     }
     li {
-      padding: 10px;
+      padding: 12px;
       border-bottom: 1px solid #eee;
+      line-height: 1.4;
     }
     li:nth-child(even) {
       background-color: #f9f9f9;
+    }
+    .no-data {
+      color: #888;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
 
   <div class="header-tools">
-    <h2 id="title">Search Q&A</h2>
+    <h2 style="margin:0;">Search Q&A</h2>
     <button id="langToggle" class="toggle-btn">Bahasa: Indonesia</button>
   </div>
 
@@ -71,61 +78,70 @@
   <ul id="results"></ul>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; // Ganti dengan URL Web App Anda
+    // Ganti URL ini dengan URL Web App Apps Script milik Anda yang baru di-deploy
+    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; 
     const STORAGE_KEY = "spreadsheet_qa_data";
 
-    // State aplikasi
+    // State Aplikasi
     let currentLang = "Indonesia"; // 'Indonesia' atau 'English'
     let allData = { Indonesia: [], English: [] };
 
-    // Executed saat document ready
+    // Dijalankan saat document / DOM siap
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Load data dari LocalStorage terlebih dahulu agar UI cepat tampil
+      // 1. Load data dari LocalStorage terlebih dahulu (jika ada)
       const localData = localStorage.getItem(STORAGE_KEY);
       if (localData) {
         try {
           allData = JSON.parse(localData);
-          updateStatus("Menampilkan data lokal.");
+          updateStatus("Menampilkan data dari LocalStorage.");
           renderResults();
         } catch (e) {
-          console.error("Gagal parse localStorage", e);
+          console.error("Gagal parse localStorage:", e);
         }
       }
 
-      // 2. Timpa / Sync dengan data terbaru dari Google Sheets (Background fetch & reload)
+      // 2. Ambil data terbaru dari Spreadsheet (Background Fetch) lalu timpa LocalStorage
       await fetchAndSyncData();
     });
 
-    // Ambil data terbaru dari API dan timpa localStorage
+    // Ambil data terbaru dari Apps Script & Simpan ke LocalStorage
     async function fetchAndSyncData() {
       updateStatus("Memperbarui data dari Spreadsheet...");
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        if (data && (data.Indonesia || data.English)) {
+        console.log("Data diterima dari API:", data);
+
+        // Validasi data tidak kosong
+        if (data && !data.error) {
           allData = data;
-          // Timpa data lama di localStorage dengan yang baru
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-          updateStatus("Data berhasil diperbarui.");
+
+          // TIMPA LOCALSTORAGE DENGAN DATA BARU
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          
+          updateStatus("Data berhasil tersimpan di LocalStorage & siap digunakan.");
           renderResults();
+        } else if (data.error) {
+          console.error("Server Apps Script Error:", data.error);
+          updateStatus("Error dari server: " + data.error);
         }
       } catch (err) {
-        console.error("Gagal mengambil data dari API:", err);
-        if (!localStorage.getItem(STORAGE_KEY)) {
-          updateStatus("Gagal memuat data. Periksa koneksi internet.");
+        console.error("Gagal fetch dari API:", err);
+        if (localStorage.getItem(STORAGE_KEY)) {
+          updateStatus("Offline/Gagal sync. Menggunakan data cache LocalStorage.");
         } else {
-          updateStatus("Menggunakan data cache (Gagal terhubung ke server).");
+          updateStatus("Gagal memuat data dari server.");
         }
       }
     }
 
-    // Fungsi Render/Search
+    // Fungsi Render Hasil Pencarian
     function renderResults() {
       const keyword = document.getElementById("search").value.toLowerCase().trim();
       const activeData = allData[currentLang] || [];
 
-      // Filter berdasarkan kata kunci di seluruh kolom
+      // Filtering pencarian lokal di array
       const filtered = activeData.filter(row => {
         if (!keyword) return true;
         return row.some(cell => String(cell).toLowerCase().includes(keyword));
@@ -134,7 +150,7 @@
       // Render ke DOM
       const resultsEl = document.getElementById("results");
       if (filtered.length === 0) {
-        resultsEl.innerHTML = "<li>Tidak ada data ditemukan.</li>";
+        resultsEl.innerHTML = "<li class='no-data'>Tidak ada data ditemukan.</li>";
         return;
       }
 
@@ -143,10 +159,10 @@
         .join("");
     }
 
-    // Event Listener untuk Search (Instant filter lokal)
+    // Event Listener Input Keyword (Search Instan)
     document.getElementById("search").addEventListener("input", renderResults);
 
-    // Event Listener untuk Toggle Bahasa
+    // Event Listener Toggle Bahasa
     document.getElementById("langToggle").addEventListener("click", function() {
       if (currentLang === "Indonesia") {
         currentLang = "English";
