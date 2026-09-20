@@ -79,20 +79,21 @@
   <ul id="results"></ul>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; 
+    // URL Web App GAS Baru
+    const API_URL = "https://script.google.com/macros/s/AKfycbwYxkplTPJbo1-9B2GQOjAGYYCot2HgB1CKHE5890bm4wRWgay3GOb4cv-Vd4RvXhEO/exec"; 
     
-    // Key terpisah di LocalStorage
+    // Key terpisah untuk LocalStorage
     const KEY_ID = "spreadsheet_qa_indonesia";
     const KEY_EN = "spreadsheet_qa_english";
 
-    // State aplikasi (Default: English)
+    // State Aplikasi (Default: English)
     let currentLang = "English"; 
     let dataID = [];
     let dataEN = [];
 
-    // Executed saat DOM Ready
+    // Dijalankan saat DOM Ready
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Baca kedua data dari LocalStorage terlebih dahulu
+      // 1. Coba load kedua data dari LocalStorage terlebih dahulu
       const localID = localStorage.getItem(KEY_ID);
       const localEN = localStorage.getItem(KEY_EN);
 
@@ -103,17 +104,17 @@
         try { dataEN = JSON.parse(localEN); } catch(e){}
       }
 
-      // Tampilkan data lokal jika ada
+      // Jika ada data di LocalStorage, tampilkan langsung secara instan
       if ((dataID && dataID.length > 0) || (dataEN && dataEN.length > 0)) {
         updateStatus("Displaying cached data from LocalStorage.");
         renderResults();
       }
 
-      // 2. Fetch data terbaru dari Apps Script untuk menimpa kedua LocalStorage
+      // 2. Fetch data terbaru di background dan timpa LocalStorage
       await fetchAndSyncData();
     });
 
-    // Ambil data terbaru dari Spreadsheet & Simpan ke 2 Key terpisah
+    // Ambil data terbaru dari API Spreadsheet
     async function fetchAndSyncData() {
       updateStatus("Syncing data from Spreadsheet...");
       try {
@@ -122,25 +123,20 @@
 
         console.log("Raw Response dari API:", data);
 
-        // Kasus A: Jika API mengembalikan format Objek { Indonesia: [...], English: [...] }
+        // Jika respons berupa Objek { Indonesia: [...], English: [...] }
         if (data && (data.Indonesia || data.English)) {
           dataID = data.Indonesia || [];
           dataEN = data.English || [];
-        } 
-        // Kasus B: Jika API masih versi lama (Array langsung)
-        else if (Array.isArray(data)) {
-          console.warn("API mengembalikan Array tunggal. Menggunakan array sebagai fallback.");
-          dataEN = data;
-          dataID = data;
+
+          // Simpan masing-masing array ke key terpisah di LocalStorage
+          localStorage.setItem(KEY_ID, JSON.stringify(dataID));
+          localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
+
+          updateStatus("Data synced and saved to separate LocalStorage keys.");
+          renderResults();
+        } else if (data && data.error) {
+          updateStatus("Server Error: " + data.error);
         }
-
-        // SIMPAN KEDUA DATA KE LOCALSTORAGE SECARA TERPISAH
-        localStorage.setItem(KEY_ID, JSON.stringify(dataID));
-        localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
-
-        updateStatus("Data synced & saved to separate LocalStorage keys.");
-        renderResults();
-
       } catch (err) {
         console.error("Fetch Error:", err);
         if (localStorage.getItem(KEY_ID) || localStorage.getItem(KEY_EN)) {
@@ -151,25 +147,24 @@
       }
     }
 
-    // Fungsi Render Hasil Pencarian / Tampil Semua
+    // Render Hasil Pencarian / Tampilkan Semua Data Bahasa Aktif
     function renderResults() {
       const keyword = document.getElementById("search").value.toLowerCase().trim();
       
-      // Tentukan sumber data berdasarkan bahasa aktif saat ini
+      // Pilih sumber data sesuai bahasa yang aktif saat ini
       const activeData = (currentLang === "English") ? dataEN : dataID;
+      const resultsEl = document.getElementById("results");
 
       if (!Array.isArray(activeData)) {
         resultsEl.innerHTML = "<li class='no-data'>Data format error.</li>";
         return;
       }
 
-      // Jika keyword kosong, tampilkan SEMUA data dari sheet bahasa yang aktif
+      // Filter data: Jika keyword kosong, ambil SEMUA baris
       const filtered = activeData.filter(row => {
         if (!keyword) return true;
         return row.some(cell => String(cell).toLowerCase().includes(keyword));
       });
-
-      const resultsEl = document.getElementById("results");
 
       if (filtered.length === 0) {
         const noDataMsg = currentLang === "English" ? "No data found." : "Tidak ada data ditemukan.";
@@ -177,16 +172,16 @@
         return;
       }
 
-      // Render daftar item
+      // Render daftar baris
       resultsEl.innerHTML = filtered
         .map(r => `<li>${r.filter(Boolean).join(" - ")}</li>`)
         .join("");
     }
 
-    // Event Listener Instant Search
+    // Event Listener: Instant Search saat mengetik
     document.getElementById("search").addEventListener("input", renderResults);
 
-    // Event Listener Toggle Bahasa (Switch data & UI)
+    // Event Listener: Toggle Bahasa (Switch data & UI)
     document.getElementById("langToggle").addEventListener("click", function() {
       if (currentLang === "English") {
         currentLang = "Indonesia";
@@ -198,7 +193,7 @@
         document.getElementById("search").placeholder = "Type keyword...";
       }
       
-      // Render ulang data menggunakan array bahasa baru
+      // Render ulang seluruh isi list menggunakan data bahasa baru
       renderResults();
     });
 
