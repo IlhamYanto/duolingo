@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Finder English</title>
+</head>
+<body>
+  <h2>Search English Q&A</h2>
+  <input type="text" id="search" placeholder="Type keyword...">
+  <ul id="results"></ul>
+
+  <script>
+    const API_URL = "PASTE_WEB_APP_URL_HERE"; // ganti dengan URL Web App
+
+    async function loadData(keyword="") {
+      const res = await fetch(API_URL + "?q=" + encodeURIComponent(keyword));
+      return await res.json();
+    }
+
+    document.getElementById("search").addEventListener("keyup", async function() {
+      const keyword = this.value;
+      const data = await loadData(keyword);
+      document.getElementById("results").innerHTML =
+        data.map(r => `<li>${r[0]} - ${r[1]} - ${r[2]}</li>`).join("");
+    });
+  </script>
+</body>
+</html>
