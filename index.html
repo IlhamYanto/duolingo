@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,88 +69,101 @@
 
   <div class="header-tools">
     <h2 style="margin:0;">Kunci Jawaban Duolingo</h2>
-    <button id="langToggle" class="toggle-btn">Bahasa: Indonesia</button>
+    <!-- Default awal: Bahasa Inggris -->
+    <button id="langToggle" class="toggle-btn">Language: English</button>
   </div>
 
-  <input type="text" id="search" placeholder="Ketik kata kunci...">
-  <div id="status">Memuat data...</div>
+  <input type="text" id="search" placeholder="Type keyword...">
+  <div id="status">Loading data...</div>
 
   <ul id="results"></ul>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbz2Wi9VdaplvZh4pZXI7kzKiCcKYHHGwj0WofRj1HYGgP9a2huBSosjvvPd_s5s-joq/exec"; 
-    const STORAGE_KEY = "spreadsheet_qa_data";
+    
+    // Key terpisah di LocalStorage
+    const KEY_ID = "spreadsheet_qa_indonesia";
+    const KEY_EN = "spreadsheet_qa_english";
 
-    // State Aplikasi
-    let currentLang = "Indonesia"; // Default awal
-    let allData = { Indonesia: [], English: [] };
+    // State aplikasi (Default: English)
+    let currentLang = "English"; 
+    let dataID = [];
+    let dataEN = [];
 
     // Executed saat DOM Ready
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Baca dari localStorage terlebih dahulu (jika ada)
-      const localData = localStorage.getItem(STORAGE_KEY);
-      if (localData) {
-        try {
-          allData = JSON.parse(localData);
-          updateStatus("Menampilkan data dari LocalStorage.");
-          renderResults(); // Langsung render semua data sesuai bahasa
-        } catch (e) {
-          console.error("Gagal parse localStorage:", e);
-        }
+      // 1. Baca kedua data dari LocalStorage terlebih dahulu
+      const localID = localStorage.getItem(KEY_ID);
+      const localEN = localStorage.getItem(KEY_EN);
+
+      if (localID) {
+        try { dataID = JSON.parse(localID); } catch(e){}
+      }
+      if (localEN) {
+        try { dataEN = JSON.parse(localEN); } catch(e){}
       }
 
-      // 2. Fetch data terbaru dari Apps Script & Timpa LocalStorage
+      // Tampilkan data lokal jika ada
+      if (dataID.length > 0 || dataEN.length > 0) {
+        updateStatus("Displaying cached data from LocalStorage.");
+        renderResults();
+      }
+
+      // 2. Fetch data terbaru dari Apps Script untuk menimpa kedua LocalStorage
       await fetchAndSyncData();
     });
 
-    // Ambil data dari Apps Script
+    // Ambil data terbaru dari Spreadsheet & Simpan ke 2 Key terpisah
     async function fetchAndSyncData() {
-      updateStatus("Memperbarui data dari Spreadsheet...");
+      updateStatus("Syncing data from Spreadsheet...");
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        console.log("Data yang didapat dari server:", data);
+        console.log("Response dari API:", data);
 
-        // Jika respons berupa array (berarti Apps Script lama), bungkus manual
-        if (Array.isArray(data)) {
-          allData = { Indonesia: data, English: data };
-        } else if (data && !data.error) {
-          allData = data;
+        if (data && !data.error) {
+          // Ambil array dari respons
+          dataID = data.Indonesia || [];
+          dataEN = data.English || [];
+
+          // SIMPAN KE MASING-MASING KEY LOCALSTORAGE
+          localStorage.setItem(KEY_ID, JSON.stringify(dataID));
+          localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
+
+          updateStatus("Data synced and saved to separate LocalStorage keys.");
+          renderResults();
+        } else if (data.error) {
+          updateStatus("Server Error: " + data.error);
         }
-
-        // Timpa ke LocalStorage
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-        updateStatus("Data berhasil tersimpan & diperbarui.");
-        
-        // Render ulang UI
-        renderResults();
-
       } catch (err) {
-        console.error("Gagal sync data:", err);
-        if (localStorage.getItem(STORAGE_KEY)) {
-          updateStatus("Offline. Menggunakan data cache LocalStorage.");
+        console.error("Fetch Error:", err);
+        if (localStorage.getItem(KEY_ID) || localStorage.getItem(KEY_EN)) {
+          updateStatus("Offline mode. Using cached LocalStorage data.");
         } else {
-          updateStatus("Gagal memuat data dari server.");
+          updateStatus("Failed to load data from server.");
         }
       }
     }
 
-    // Fungsi Render Hasil (Tampilkan Semua jika keyword kosong)
+    // Fungsi Render Hasil Pencarian / Tampil Semua
     function renderResults() {
       const keyword = document.getElementById("search").value.toLowerCase().trim();
-      const activeData = allData[currentLang] || [];
+      
+      // Tentukan sumber data berdasarkan bahasa aktif saat ini
+      const activeData = (currentLang === "English") ? dataEN : dataID;
 
-      // Jika keyword kosong, tampilkan seluruh data sheet yang aktif
+      // Jika keyword kosong, tampilkan SEMUA data dari sheet bahasa yang aktif
       const filtered = activeData.filter(row => {
-        if (!keyword) return true; 
+        if (!keyword) return true;
         return row.some(cell => String(cell).toLowerCase().includes(keyword));
       });
 
       const resultsEl = document.getElementById("results");
 
       if (filtered.length === 0) {
-        resultsEl.innerHTML = "<li class='no-data'>Tidak ada data ditemukan.</li>";
+        const noDataMsg = currentLang === "English" ? "No data found." : "Tidak ada data ditemukan.";
+        resultsEl.innerHTML = `<li class='no-data'>${noDataMsg}</li>`;
         return;
       }
 
@@ -160,21 +173,22 @@
         .join("");
     }
 
-    // Event Listener Search (Pencarian Instant)
+    // Event Listener Instant Search
     document.getElementById("search").addEventListener("input", renderResults);
 
-    // Event Listener Toggle Bahasa
+    // Event Listener Toggle Bahasa (Switch data & UI)
     document.getElementById("langToggle").addEventListener("click", function() {
-      if (currentLang === "Indonesia") {
-        currentLang = "English";
-        this.innerText = "Language: English";
-        document.getElementById("search").placeholder = "Type keyword...";
-      } else {
+      if (currentLang === "English") {
         currentLang = "Indonesia";
         this.innerText = "Bahasa: Indonesia";
         document.getElementById("search").placeholder = "Ketik kata kunci...";
+      } else {
+        currentLang = "English";
+        this.innerText = "Language: English";
+        document.getElementById("search").placeholder = "Type keyword...";
       }
-      // Render ulang seluruh data sesuai bahasa yang dipilih
+      
+      // Render ulang data menggunakan array bahasa baru
       renderResults();
     });
 
