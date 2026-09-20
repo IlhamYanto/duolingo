@@ -56,14 +56,14 @@
     }
     #search {
       width: 100%;
-      padding: 10px 48px 10px 12px; /* Diberi ruang kanan 48px agar tidak tertimpa tombol X */
+      padding: 10px 48px 10px 12px;
       font-size: 16px;
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
 
-    /* Tombol X Clear Lebih Lebar & Cepat Diklik */
+    /* Tombol X Clear */
     .clear-btn {
       position: absolute;
       right: 6px;
@@ -74,8 +74,8 @@
       color: #333;
       font-weight: bold;
       font-size: 18px;
-      width: 32px;  /* Dibuat lebih lebar */
-      height: 32px; /* Dibuat lebih tinggi */
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       cursor: pointer;
       display: none;
@@ -142,6 +142,31 @@
       font-weight: 600;
       color: #6f42c1;
     }
+
+    /* Area & Tombol Reset/Search Again Paling Bawah */
+    .bottom-action-container {
+      margin-top: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+      display: none;
+    }
+    .btn-search-again {
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #555;
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-search-again:hover {
+      background-color: #007bff;
+      color: #fff;
+      border-color: #007bff;
+    }
   </style>
 </head>
 <body>
@@ -163,6 +188,11 @@
   <div id="status">Loading data...</div>
 
   <ul id="results"></ul>
+
+  <!-- Tombol Bottom Reset / Search Again -->
+  <div id="bottomAction" class="bottom-action-container">
+    <button id="btnSearchAgain" class="btn-search-again">Clear &amp; Search Again</button>
+  </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwYxkplTPJbo1-9B2GQOjAGYYCot2HgB1CKHE5890bm4wRWgay3GOb4cv-Vd4RvXhEO/exec"; 
@@ -206,6 +236,8 @@
     const searchInput = document.getElementById("search");
     const clearBtn = document.getElementById("clearSearch");
     const appTitle = document.getElementById("appTitle");
+    const bottomAction = document.getElementById("bottomAction");
+    const btnSearchAgain = document.getElementById("btnSearchAgain");
 
     document.addEventListener("DOMContentLoaded", async () => {
       // 1. Load dari LocalStorage
@@ -256,6 +288,14 @@
       return formatted;
     }
 
+    // Fungsi Reset Search untuk digunakan tombol X & tombol bawah
+    function clearSearch() {
+      searchInput.value = "";
+      searchInput.focus();
+      renderResults();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     // Render Hasil Pencarian (dengan AND Logika Multi-Keyword)
     function renderResults() {
       const inputVal = searchInput.value.toLowerCase().trim();
@@ -267,6 +307,7 @@
 
       if (!Array.isArray(activeData)) {
         resultsEl.innerHTML = "<li class='no-data'>Data format error.</li>";
+        bottomAction.style.display = "none";
         return;
       }
 
@@ -287,7 +328,16 @@
       if (filtered.length === 0) {
         const noDataMsg = currentLang === "English" ? "No data found." : "Tidak ada data ditemukan.";
         resultsEl.innerHTML = `<li class='no-data'>${noDataMsg}</li>`;
+        bottomAction.style.display = "none";
         return;
+      }
+
+      // Tampilkan tombol "Clear & Search Again" di bawah jika sedang mencari (keywords ada) & ada hasil
+      if (keywords.length > 0 && filtered.length > 0) {
+        bottomAction.style.display = "block";
+        btnSearchAgain.innerText = (currentLang === "English") ? "Clear & Search Again" : "Bersihkan & Cari Lagi";
+      } else {
+        bottomAction.style.display = "none";
       }
 
       // Render Hasil
@@ -305,12 +355,11 @@
     // Listener Input Search
     searchInput.addEventListener("input", renderResults);
 
-    // Listener Tombol Clear (X)
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      searchInput.focus();
-      renderResults();
-    });
+    // Listener Tombol Clear Top (X)
+    clearBtn.addEventListener("click", clearSearch);
+
+    // Listener Tombol Clear Bottom (Search Again)
+    btnSearchAgain.addEventListener("click", clearSearch);
 
     // Listener Toggle Bahasa
     document.getElementById("langToggle").addEventListener("click", function() {
