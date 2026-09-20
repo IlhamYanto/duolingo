@@ -17,24 +17,16 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
-    }
-    .title-wrapper {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
+      gap: 10px;
     }
     .title-wrapper h2 {
       margin: 0;
       font-size: 1.5rem;
     }
-    .by-author {
-      font-size: 0.75rem;
-      color: #777;
-      font-weight: normal;
-      font-style: italic;
-    }
+
+    /* Styling Tombol Toggle Bahasa Responsive */
     .toggle-btn {
-      padding: 8px 16px;
+      padding: 8px 14px;
       cursor: pointer;
       font-weight: bold;
       border: 1px solid #007bff;
@@ -42,10 +34,36 @@
       color: #007bff;
       border-radius: 4px;
       transition: all 0.2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .toggle-btn:hover {
       background-color: #007bff;
       color: #fff;
+    }
+
+    /* Versi Teks Lengkap Desktop & Ringkas Mobile */
+    .lang-text-short {
+      display: none; /* Sembunyi secara default di Desktop */
+    }
+
+    /* Penyesuaian khusus untuk Layar HP / Mobile */
+    @media (max-width: 480px) {
+      .lang-text-full {
+        display: none; /* Sembunyikan teks panjang di HP */
+      }
+      .lang-text-short {
+        display: inline; /* Tampilkan 🇬🇧 EN atau 🇮🇩 ID di HP */
+      }
+      .toggle-btn {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+      }
+      .title-wrapper h2 {
+        font-size: 1.25rem;
+      }
     }
 
     /* Container Input Search & Tombol Clear X Lebar */
@@ -185,9 +203,11 @@
   <div class="header-tools">
     <div class="title-wrapper">
       <h2 id="appTitle">Duolingo Answer Keys</h2>
-      <span class="by-author">by Esor</span>
     </div>
-    <button id="langToggle" class="toggle-btn">Language: English</button>
+    <button id="langToggle" class="toggle-btn">
+      <span class="lang-text-full">Language: English</span>
+      <span class="lang-text-short">🇬🇧 EN</span>
+    </button>
   </div>
 
   <!-- Search Box dengan Tombol X Clear Lebar -->
@@ -205,10 +225,10 @@
     <button id="btnSearchAgain" class="btn-search-again">Clear &amp; Search Again</button>
   </div>
 
-  <!-- Footer Dipisah Baris -->
+  <!-- Footer dengan Love Hijau & Teks Terbaru -->
   <footer>
-    Made with ❤️ by Esor<br>
-    Gresik &mdash; ITS Champion
+    Made with 💚 by Esor<br>
+    Gresik &mdash; It's Champion
   </footer>
 
   <script>
@@ -255,6 +275,7 @@
     const appTitle = document.getElementById("appTitle");
     const bottomAction = document.getElementById("bottomAction");
     const btnSearchAgain = document.getElementById("btnSearchAgain");
+    const langToggleBtn = document.getElementById("langToggle");
 
     document.addEventListener("DOMContentLoaded", async () => {
       // 1. Load dari LocalStorage
@@ -305,7 +326,7 @@
       return formatted;
     }
 
-    // Fungsi Reset Search untuk digunakan tombol X, tombol bawah, & Shortcut Enter
+    // Fungsi Reset Search
     function clearSearch() {
       searchInput.value = "";
       searchInput.focus();
@@ -349,7 +370,7 @@
         return;
       }
 
-      // Tampilkan tombol "Clear & Search Again" di bawah jika sedang mencari (keywords ada) & ada hasil
+      // Tampilkan tombol "Clear & Search Again" di bawah jika sedang mencari & ada hasil
       if (keywords.length > 0 && filtered.length > 0) {
         bottomAction.style.display = "block";
         btnSearchAgain.innerText = (currentLang === "English") ? "Clear & Search Again" : "Bersihkan & Cari Lagi";
@@ -386,18 +407,18 @@
     // Listener Tombol Clear Bottom (Search Again)
     btnSearchAgain.addEventListener("click", clearSearch);
 
-    // Listener Toggle Bahasa
-    document.getElementById("langToggle").addEventListener("click", function() {
+    // Listener Toggle Bahasa (Ubah Teks Desktop & Mobile)
+    langToggleBtn.addEventListener("click", function() {
       if (currentLang === "English") {
         currentLang = "Indonesia";
-        this.innerText = "Bahasa: Indonesia";
         appTitle.innerText = "Kunci Jawaban Duolingo";
         searchInput.placeholder = "Ketik kata kunci (cth: ba mor)...";
+        this.innerHTML = `<span class="lang-text-full">Bahasa: Indonesia</span><span class="lang-text-short">🇮🇩 ID</span>`;
       } else {
         currentLang = "English";
-        this.innerText = "Language: English";
         appTitle.innerText = "Duolingo Answer Keys";
         searchInput.placeholder = "Type keywords (e.g. ba mor)...";
+        this.innerHTML = `<span class="lang-text-full">Language: English</span><span class="lang-text-short">🇬🇧 EN</span>`;
       }
       renderResults();
     });
