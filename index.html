@@ -54,7 +54,7 @@
     li {
       padding: 12px;
       border-bottom: 1px solid #eee;
-      line-height: 1.4;
+      line-height: 1.5;
     }
     li:nth-child(even) {
       background-color: #f9f9f9;
@@ -63,13 +63,34 @@
       color: #888;
       font-style: italic;
     }
+    
+    /* Styling Format Jawaban & Pertanyaan */
+    .num {
+      color: #777;
+      font-size: 0.9em;
+      margin-right: 4px;
+    }
+    .q-text {
+      color: #222;
+    }
+    .ans-text {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .highlight-lang {
+      font-weight: 600;
+      color: #0056b3;
+    }
+    .highlight-quote {
+      font-weight: 600;
+      color: #d9534f;
+    }
   </style>
 </head>
 <body>
 
   <div class="header-tools">
     <h2 style="margin:0;">Kunci Jawaban Duolingo</h2>
-    <!-- Default awal: Bahasa Inggris -->
     <button id="langToggle" class="toggle-btn">Language: English</button>
   </div>
 
@@ -79,21 +100,37 @@
   <ul id="results"></ul>
 
   <script>
-    // URL Web App GAS Baru
     const API_URL = "https://script.google.com/macros/s/AKfycbwYxkplTPJbo1-9B2GQOjAGYYCot2HgB1CKHE5890bm4wRWgay3GOb4cv-Vd4RvXhEO/exec"; 
     
-    // Key terpisah untuk LocalStorage
     const KEY_ID = "spreadsheet_qa_indonesia";
     const KEY_EN = "spreadsheet_qa_english";
 
+    // Embedded Fallback Data dari JSON yang Anda berikan
+    const DEFAULT_DATA = {"Indonesia":[["#","Pertanyaan","Jawaban"],[1,"Apa bahasa resmi Brasil?","Portugis"],[2,"Apa nama roti Prancis yang terkenal?","Baguette"],[3,"Apa nama turret milik Jessie?","Scrappy"],[4,"Apa yang harus dihancurkan dalam 'Heist'?","Brankas musuh"],[5,"Apakah pelajaran bahasa Spanyolmu hari ini sudah selesai?","Sí"],[6,"Apakah Spike lebih baik dariku, Duo?","Tidak, Tidak!, TIDAK!"],[7,"Bagaimana Gene mengatakan 'halo'?","Huwa wawawawaw!"],[8,"Bagaimana menerjemahkan kata Inggris 'cat' ke bahasa Rusia?","Кошка"],[9,"Bagaimana menerjemahkan 'rumah' ke bahasa Inggris?","House"],[10,"Bagaimana mengatakan 'air' dalam bahasa Inggris?","Water"],[11,"Bagaimana mengatakan 'air' dalam bahasa Yunani?","Νερό"],[12,"Bagaimana mengatakan 'anjing' dalam bahasa Turki?","Köpek"],[13,"Bagaimana mengatakan 'ayah' dalam bahasa Mandarin?","爸爸"],[14,"Bagaimana mengatakan 'bulan' dalam bahasa Korea?","달"],[15,"Bagaimana mengatakan 'halo' dalam bahasa Finlandia?","Hei"],[16,"Bagaimana mengatakan 'halo' dalam bahasa Slovenia?","Živjo"],[17,"Bagaimana mengatakan 'halo' dalam bahasa Spanyol?","Wabing, Hola"],[18,"Bagaimana mengatakan 'halo' dalam bahasa Spanyol?","Hola"],[19,"Bagaimana mengatakan 'halo' dalam bahasa Wabing?","Wabing"],[20,"Bagaimana mengatakan 'halo' dalam bahasa Wabing?","Wabing!, Wabing!, Wabing!"],[21,"Bagaimana mengatakan 'hujan' dalam bahasa Mandarin?","雨"],[22,"Bagaimana mengatakan 'ibu' dalam bahasa Jepang?","お母さん"],[23,"Bagaimana mengatakan 'keluarga' dalam bahasa Inggris?","Family"],[24,"Bagaimana mengatakan 'kopi' dalam bahasa Korea?","커피"],[25,"Bagaimana mengatakan 'kursi' dalam bahasa Italia?","Sedia"],[26,"Bagaimana mengatakan 'kursi' dalam bahasa Spanyol?","Silla"],[27,"Bagaimana mengatakan 'matahari' dalam bahasa Rusia?","Солнце"],[28,"Bagaimana mengatakan 'rak buku' dalam bahasa Finlandia?","Kirjahylly"],[29,"Bagaimana mengatakan 'salju' dalam bahasa Korea?","눈"],[30,"Bagaimana mengatakan 'satu' dalam bahasa Swedia?","Ett"],[31,"Bagaimana mengatakan 'selamat datang' dalam bahasa Swedia?","Välkommen"],[32,"Bagaimana mengatakan 'selamat malam' dalam bahasa Italia?","Buonanotte"],[33,"Bagaimana mengatakan 'selamat malam' dalam bahasa Spanyol?","Buenas noches"],[34,"Bagaimana mengatakan 'selamat pagi' dalam bahasa Tagalog?","Magandang umaga"],[35,"Bagaimana mengatakan 'selamat tinggal' dalam bahasa Italia?","Arrivederci"],[36,"Bagaimana mengatakan 'susu' dalam bahasa Arab?","حليب"],[37,"Bagaimana mengatakan 'teman' dalam bahasa Inggris?","Friend"],[38,"Bagaimana mengatakan 'teman' dalam bahasa Polandia?","Przyjaciel"],[39,"Bagaimana mengatakan 'teman' dalam bahasa Prancis?","Ami"],[40,"Bagaimana mengatakan 'terima kasih' dalam bahasa Belanda?","Dank je"],[41,"Bagaimana mengatakan 'terima kasih' dalam bahasa Finlandia?","Kiitos, Wabing!"],[42,"Bagaimana mengatakan 'terima kasih' dalam bahasa Hungaria?","Köszönöm"],[43,"Bagaimana mengatakan 'terima kasih' dalam bahasa Ibrani?","תודה"],[44,"Bagaimana mengatakan 'terima kasih' dalam bahasa Islandia?","Takk"],[45,"Bagaimana mengatakan 'terima kasih' dalam bahasa Swahili?","Asante"],[46,"Bagaimana mengatakan 'terima kasih' dalam bahasa Wales?","Diolch"],[47,"Bagaimana mengatakan 'tolong' dalam bahasa Inggris?","Please"],[48,"Bagaimana mengatakan 'tolong' dalam bahasa Italia?","Per favore"],[49,"Bagaimana mengatakan 'tolong' dalam bahasa Portugis?","Por favor"],[50,"Bagaimana mengatakan 'ya' dalam bahasa Inggris?","Yes"],[51,"Bagaimana menggambarkan orang yang sedang 'terbakar emosinya' (kesal karena kalah) dalam bahasa Italia?","Arrabbiato"],[52,"Bagaimana menulis 'satu' dalam bahasa Jepang?","一"],[53,"Bahasa apa yang merupakan bahasa ibu bagi jumlah orang terbanyak di dunia?","Bahasa Mandarin Utara"],[54,"Bahasa mana yang menggunakan alfabet berbasis Kiril?","Rusia"],[55,"Berapa jumlah Jagoan dalam game ketika versi beta dirilis pada Juni 2017?","15"],[56,"Berapa pemain yang berpartisipasi dalam 'Solo Showdown'?","10"],[57,"Biasanya berapa gol yang harus dicetak untuk menang dalam 'Brawl Ball'?","2"],[58,"Game Brawl Stars dirilis pada tahun...","2018"],[59,"Jagoan mana yang bertarung menggunakan sekop?","Mortis"],[60,"Jagoan mana yang bertarung menggunakan tongkat bisbol?","Bibi"],[61,"Jagoan mana yang melempar batang dinamit?","Dynamike"],[62,"Jagoan mana yang memainkan gitar?","Poco"],[63,"Jagoan mana yang memanggil beruang ketika menggunakan Super?","Nita"],[64,"Jagoan mana yang memasang turret penyembuh ketika menggunakan Super?","Pam"],[65,"Jagoan mana yang menembakkan roket?","Brock"],[66,"Jagoan mana yang menggelinding maju dalam tong ketika menggunakan Super?","Darryl"],[67,"Kata mana dalam bahasa Norwegia yang berarti 'ya'?","Ja"],[68,"Kata mana dalam bahasa Spanyol yang berarti 'satu'?","Uno"],[69,"Kata mana yang berarti 'air' dalam bahasa Italia?","Acqua"],[70,"Kata mana yang berarti 'air' dalam bahasa Swedia?","Vatten"],[71,"Kata mana yang berarti 'anjing' dalam bahasa Jepang?","犬"],[72,"Kata mana yang berarti 'anjing' dalam bahasa Spanyol?","Perro"],[73,"Kata mana yang berarti 'apel' dalam bahasa Korea?","사과"],[74,"Kata mana yang berarti 'api' dalam bahasa Spanyol?","Fuego"],[75,"Kata mana yang berarti 'bahagia' dalam bahasa Arab?","سعيد"],[76,"Kata mana yang berarti 'bahagia' dalam bahasa Jepang?","幸せ"],[77,"Kata mana yang berarti 'baik' dalam bahasa Swahili?","Nzuri"],[78,"Kata mana yang berarti 'bintang' dalam bahasa Hungaria?","Csillag"],[79,"Kata mana yang berarti 'buku' dalam bahasa Italia?","Libro"],[80,"Kata mana yang berarti 'buku' dalam bahasa Spanyol?","Libro"],[81,"Kata mana yang berarti 'chicken' dalam bahasa Indonesia?","Ayam"],[82,"Kata mana yang berarti 'cinta' dalam bahasa Italia?","Amore"],[83,"Kata mana yang berarti 'dunia' dalam bahasa Portugis?","Mundo"],[84,"Kata mana yang berarti 'gunung' dalam bahasa Jepang?","山"],[85,"Kata mana yang berarti 'halo' dalam bahasa Hawaii?","Aloha"],[86,"Kata mana yang berarti 'halo' dalam bahasa Hindi?","नमस्ते"],[87,"Kata mana yang berarti 'halo' dalam bahasa Mandarin?","你好"],[88,"Kata mana yang berarti 'halo' dalam bahasa Norwegia?","Hei"],[89,"Kata mana yang berarti 'halo' dalam bahasa Swahili?","Jambo"],[90,"Kata mana yang berarti 'halo' dalam bahasa Turki?","Merhaba"],[91,"Kata mana yang berarti 'keluarga' dalam bahasa Italia?","Famiglia"],[92,"Kata mana yang berarti 'kopi' dalam bahasa Portugis?","Café"],[93,"Kata mana yang berarti 'kucing' dalam bahasa Jepang?","猫"],[94,"Kata mana yang berarti 'kuning' dalam bahasa Yunani?","Κίτρινο"],[95,"Kata mana yang berarti 'matahari' dalam bahasa Spanyol?","Sol"],[96,"Kata mana yang berarti 'merah' dalam bahasa Spanyol?","Rojo"],[97,"Kata mana yang berarti 'nanas' dalam bahasa Italia?","Ananas"],[98,"Kata mana yang berarti 'roti' dalam bahasa Prancis?","Pain"],[99,"Kata mana yang berarti 'rumah' dalam bahasa Turki?","Ev"],[100,"Kata mana yang berarti 'school' dalam bahasa Indonesia?","Sekolah"],[101,"Kata mana yang berarti 'sekolah' dalam bahasa Jerman?","Schule"],[102,"Kata mana yang berarti 'susu' dalam bahasa Prancis?","Lait"],[103,"Kata mana yang berarti 'teh' dalam bahasa Mandarin?","茶"],[104,"Kata mana yang berarti 'telepon' dalam bahasa Korea?","전화"],[105,"Kata mana yang berarti 'telur' dalam bahasa Vietnam?","Trứng"],[106,"Kata mana yang berarti 'teman' dalam bahasa Finlandia?","Ystävä"],[107,"Kata mana yang berarti 'teman' dalam bahasa Spanyol?","Amigo"],[108,"Kata mana yang berarti 'teman' dalam bahasa Turki?","Arkadaş"],[109,"Kata mana yang berarti 'terima kasih' dalam bahasa Arab?","شكراً"],[110,"Kata mana yang berarti 'terima kasih' dalam bahasa Norwegia?","Takk"],[111,"Kata mana yang berarti 'ya' dalam bahasa Jerman?","Ja"],[112,"Lengkapi kalimat: 'Duo tidak keluar dari game karena marah, Duo...'","Menjadi MENGAMUK"],[113,"Lengkapi kalimat: 'Sin dolor...'","No hay gloria"],[114,"Lengkapi kalimat: 'Tanpa pengalaman tidak akan ada...'","level baru"],[115,"Lengkapi trio: Trunk, Lily, dan...","Cordelius"],[116,"Lewatkan satu hari — kehilangan streak. Kalah dalam pertandingan — kehilangan...","Trofi"],[117,"Manakah kata yang benar-benar ada dalam bahasa Spanyol?","Zapato"],[118,"Pada jumlah kristal berapa hitung mundur dimulai dalam 'Gem Grab'?","10"],[119,"Pilih hadiah utama untuk streak tujuh hari.","Hak untuk menyombongkan diri"],[120,"Pilih makanan tradisional Inggris.","Panggang kubis dan kentang"],[121,"Pilih terjemahan bahasa Rusia yang benar untuk 'hello'.","Привет"],[122,"Pilih terjemahan bahasa Rusia yang benar untuk 'thank you'.","Спасибо"],[123,"Pilih terjemahan yang benar untuk 'air' dalam bahasa Jerman.","Wasser"],[124,"Pilih terjemahan yang benar untuk 'air' dalam bahasa Korea.","물"],[125,"Pilih terjemahan yang benar untuk 'air' dalam bahasa Polandia.","Woda"],[126,"Pilih terjemahan yang benar untuk 'aku cinta kamu' dalam bahasa Mandarin.","我爱你"],[127,"Pilih terjemahan yang benar untuk 'apel' dalam bahasa Mandarin.","苹果"],[128,"Pilih terjemahan yang benar untuk 'biru' dalam bahasa Prancis.","Bleu"],[129,"Pilih terjemahan yang benar untuk 'buku' dalam bahasa Inggris.","Book"],[130,"Pilih terjemahan yang benar untuk 'buku' dalam bahasa Jerman.","Buch"],[131,"Pilih terjemahan yang benar untuk 'buku' dalam bahasa Mandarin.","书"],[132,"Pilih terjemahan yang benar untuk 'cantik' dalam bahasa Portugis.","Bonita"],[133,"Pilih terjemahan yang benar untuk 'cat' dalam bahasa Melayu.","Kucing"],[134,"Pilih terjemahan yang benar untuk 'halo' dalam bahasa Irlandia.","Dia dhuit"],[135,"Pilih terjemahan yang benar untuk 'halo' dalam bahasa Persia.","سلام"],[136,"Pilih terjemahan yang benar untuk 'halo' dalam bahasa Portugis.","Olá"],[137,"Pilih terjemahan yang benar untuk 'halo' dalam bahasa Thailand.","สวัสดี"],[138,"Pilih terjemahan yang benar untuk 'hijau' dalam bahasa Jerman.","Grün"],[139,"Pilih terjemahan yang benar untuk 'keju' dalam bahasa Prancis.","Fromage"],[140,"Pilih terjemahan yang benar untuk 'keluarga' dalam bahasa Polandia.","Rodzina"],[141,"Pilih terjemahan yang benar untuk 'kucing' dalam bahasa Jerman.","Katze"],[142,"Pilih terjemahan yang benar untuk 'kuda' dalam bahasa Hindi.","घोड़ा"],[143,"Pilih terjemahan yang benar untuk 'kuning' dalam bahasa Ukraina.","Жовтий"],[144,"Pilih terjemahan yang benar untuk 'kursi' dalam bahasa Belanda.","Stoel"],[145,"Pilih terjemahan yang benar untuk 'malam' dalam bahasa Finlandia.","Yö"],[146,"Pilih terjemahan yang benar untuk 'malam' dalam bahasa Prancis.","Nuit"],[147,"Pilih terjemahan yang benar untuk 'merah' dalam bahasa Inggris.","Red"],[148,"Pilih terjemahan yang benar untuk 'merah' dalam bahasa Prancis.","Rouge"],[149,"Pilih terjemahan yang benar untuk 'mobil' dalam bahasa Melayu.","Kereta"],[150,"Pilih terjemahan yang benar untuk 'mobil' dalam bahasa Prancis.","Voiture"],[151,"Pilih terjemahan yang benar untuk 'musim panas' dalam bahasa Finlandia.","Kesä"],[152,"Pilih terjemahan yang benar untuk 'pagi' dalam bahasa Inggris.","Morning"],[153,"Pilih terjemahan yang benar untuk 'putih' dalam bahasa Ibrani.","לבן"],[154,"Pilih terjemahan yang benar untuk 'roti' dalam bahasa Jerman.","Brot"],[155,"Pilih terjemahan yang benar untuk 'roti' dalam bahasa Polandia.","Chleb"],[156,"Pilih terjemahan yang benar untuk 'rumah' dalam bahasa Jerman.","Haus"],[157,"Pilih terjemahan yang benar untuk 'rumah' dalam bahasa Swedia.","Hus"],[158,"Pilih terjemahan yang benar untuk 'rumah' dalam bahasa Vietnam.","Nhà"],[159,"Pilih terjemahan yang benar untuk 'sekolah' dalam bahasa Mandarin.","学校"],[160,"Pilih terjemahan yang benar untuk 'selamat malam' dalam bahasa Portugis.","Boa noite"],[161,"Pilih terjemahan yang benar untuk 'selamat pagi' dalam bahasa Belanda.","Goedemorgen"],[162,"Pilih terjemahan yang benar untuk 'selamat pagi' dalam bahasa Jerman.","Guten Morgen"],[163,"Pilih terjemahan yang benar untuk 'selamat pagi' dalam bahasa Polandia.","Dzień dobry"],[164,"Pilih terjemahan yang benar untuk 'selamat tinggal' dalam bahasa Inggris.","Goodbye"],[165,"Pilih terjemahan yang benar untuk 'selamat tinggal' dalam bahasa Jerman.","Tschüss"],[166,"Pilih terjemahan yang benar untuk 'selamat tinggal' dalam bahasa Norwegia.","Ha det"],[167,"Pilih terjemahan yang benar untuk 'selamat tinggal' dalam bahasa Swedia.","Hej då"],[168,"Pilih terjemahan yang benar untuk 'sepeda' dalam bahasa Belanda.","Fiets"],[169,"Pilih terjemahan yang benar untuk 'susu' dalam bahasa Finlandia.","Maito"],[170,"Pilih terjemahan yang benar untuk 'susu' dalam bahasa Swedia.","Mjölk"],[171,"Pilih terjemahan yang benar untuk 'teman' dalam bahasa Korea.","친구"],[172,"Pilih terjemahan yang benar untuk 'teman' dalam bahasa Mandarin.","朋友"],[173,"Pilih terjemahan yang benar untuk 'teman' dalam bahasa Vietnam.","Bạn bè"],[174,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Finlandia.","Kiitos"],[175,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Jepang.","ありがとう"],[176,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Korea.","감사합니다"],[177,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Polandia.","Dziękuję"],[178,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Prancis.","Merci"],[179,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Swedia.","Tack"],[180,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Thailand.","ขอบคุณ"],[181,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Ukraina.","Дякую"],[182,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Vietnam.","Cảm ơn"],[183,"Pilih terjemahan yang benar untuk 'terima kasih' dalam bahasa Yunani.","Ευχαριστώ"],[184,"Pilih terjemahan yang benar untuk 'thank you' dalam bahasa Indonesia.","Terima kasih"],[185,"Pilih terjemahan yang benar untuk 'tidak' dalam bahasa Finlandia.","Ei"],[186,"Pilih terjemahan yang benar untuk 'ya' dalam bahasa Swedia.","Ja"],[187,"Pilih terjemahan yang benar untuk 'ya' dalam bahasa Yunani.","Ναι"],[188,"Selamat datang...","di Starr Park"],[189,"Siapa di antara mereka yang merupakan Jagoan awal?","Shelly"],[190,"Siapa Jagoan yang merupakan kaktus?","Spike"],[191,"Siapa nama Rico sebelumnya?","Ricochet"],[192,"Siapa rival utama Melody?","Janet"],[193,"Siapa yang menulis di kolam Velocirapto Park?","Chester"],[194,"Siapa yang merupakan rekan satu tim terburuk?","Edgar, Mortis, Dynamike"],[195,"Tulisan bahasa apa yang disebut 'Hangul'?","Bahasa Korea"],[196,"Yang mana merupakan makanan Finlandia?","Karjalanpiirakka (pai Karelian)"],[197,"Yang mana merupakan makanan tradisional Jepang?","Sushi"],[198,"Pengambilan dengan melewati' dari Duolingo","Wah!"]],"English":[["#","Question","Answer"],[1,"A type of bad random","Edgar, Mortis, Dynamike"],[2,"At how many gems does the countdown begin in 'Gem Grab'?","10"],[3,"Brawl Stars was released in...","2018"],[4,"Choose a traditional English food.","Roasted cabbage and potatoes"],[5,"Choose the English word for 'book'.","Book"],[6,"Choose the English word for 'family'.","Family"],[7,"Choose the English word for 'friend'.","Friend"],[8,"Choose the English word for 'goodbye'.","Goodbye"],[9,"Choose the English word for 'morning'.","Morning"],[10,"Choose the English word for 'please'.","Please"],[11,"Choose the English word for 'red'.","Red"],[12,"Choose the English word for 'water'.","Water"],[13,"Choose the English word for 'yes'.","Yes"],[14,"Choose the German word for 'cat'.","Katze"],[15,"Choose the Italian word for 'family'.","Famiglia"],[16,"Choose the Korean word for 'thank you'.","감사합니다"],[17,"Choose the main reward for a seven-day streak.","The right to brag"],[18,"Choose the Spanish word for 'book'.","Libro"],[19,"Choose the Swahili word for 'hello'.","Jambo"],[20,"Complete the sentence: 'Duo doesn't leave the game because he's angry, Duo...'","GOES RAGING"],[21,"Complete the sentence: 'Sin dolor...'","No hay gloria"],[22,"Complete the sentence: 'Without experience there would be no...'","new level"],[23,"Complete the trio: Trunk, Lily, and...","Cordelius"],[24,"Have you finished your Spanish lesson today?","Sí"],[25,"How do you describe someone who is 'burning with emotion' (upset because they lost) in Italian?","Arrabbiato"],[26,"How do you say 'hello' in Gene?","Huwa wawawawaw!"],[27,"How do you say 'hello' in Wabing?","Wabing"],[28,"How do you say 'hello' in Wabing?","Wabing!, Wabing!, Wabing!"],[29,"How many Brawlers were in the game when the beta version was released in June 2017?","15"],[30,"How many players participate in 'Solo Showdown'?","10"],[31,"Is Spike better than me (Duo)?","No, No!, NO!"],[32,"Passing take' from Duolingo","Wow!"],[33,"Pick the Greek word for 'thank you'.","Ευχαριστώ"],[34,"Pick the Italian word for 'love'.","Amore"],[35,"Select the Arabic word for 'happy'.","سعيد"],[36,"Select the Arabic word for 'milk'.","حليب"],[37,"Select the Arabic word for 'thank you'.","شكراً"],[38,"Select the Chinese word for 'apple'.","苹果"],[39,"Select the Chinese word for 'book'.","书"],[40,"Select the Chinese word for 'father'.","爸爸"],[41,"Select the Chinese word for 'friend'.","朋友"],[42,"Select the Chinese word for 'hello'.","你好"],[43,"Select the Chinese word for 'I love you'.","我爱你"],[44,"Select the Chinese word for 'rain'.","雨"],[45,"Select the Chinese word for 'school'.","学校"],[46,"Select the Dutch word for 'bicycle'.","Fiets"],[47,"Select the Dutch word for 'chair'.","Stoel"],[48,"Select the Dutch word for 'good morning'.","Goedemorgen"],[49,"Select the Dutch word for 'thank you'.","Dank je"],[50,"Select the Finnish word for 'friend'.","Ystävä"],[51,"Select the Finnish word for 'milk'.","Maito"],[52,"Select the Finnish word for 'night'.","Yö"],[53,"Select the Finnish word for 'no'.","Ei"],[54,"Select the Finnish word for 'summer'.","Kesä"],[55,"Select the Finnish word for 'thank you'.","Kiitos"],[56,"Select the Finnish word for 'thank you'.","Kiitos, Wabing!"],[57,"Select the French word for 'blue'.","Bleu"],[58,"Select the French word for 'bread'.","Pain"],[59,"Select the French word for 'car'.","Voiture"],[60,"Select the French word for 'cheese'.","Fromage"],[61,"Select the French word for 'friend'.","Ami"],[62,"Select the French word for 'milk'.","Lait"],[63,"Select the French word for 'night'.","Nuit"],[64,"Select the French word for 'red'.","Rouge"],[65,"Select the French word for 'thank you'.","Merci"],[66,"Select the German word for 'book'.","Buch"],[67,"Select the German word for 'bread'.","Brot"],[68,"Select the German word for 'good morning'.","Guten Morgen"],[69,"Select the German word for 'goodbye'.","Tschüss"],[70,"Select the German word for 'green'.","Grün"],[71,"Select the German word for 'house'.","Haus"],[72,"Select the German word for 'water'.","Wasser"],[73,"Select the German word for 'yes'.","Ja"],[74,"Select the Greek word for 'water'.","Νερό"],[75,"Select the Greek word for 'yellow'.","Κίτρινο"],[76,"Select the Greek word for 'yes'.","Ναι"],[77,"Select the Hawaiian word for 'hello'.","Aloha"],[78,"Select the Hebrew word for 'thank you'.","תודה"],[79,"Select the Hebrew word for 'white'.","לבן"],[80,"Select the Hindi word for 'hello'.","नमस्ते"],[81,"Select the Hindi word for 'horse'.","घोड़ा"],[82,"Select the Hungarian word for 'star'.","Csillag"],[83,"Select the Hungarian word for 'thank you'.","Köszönöm"],[84,"Select the Icelandic word for 'thank you'.","Takk"],[85,"Select the Indonesian word for 'thank you'.","Terima kasih"],[86,"Select the Irish word for 'hello'.","Dia dhuit"],[87,"Select the Italian word for 'book'.","Libro"],[88,"Select the Italian word for 'chair'.","Sedia"],[89,"Select the Italian word for 'good night'.","Buonanotte"],[90,"Select the Italian word for 'goodbye'.","Arrivederci"],[91,"Select the Italian word for 'pineapple'.","Ananas"],[92,"Select the Italian word for 'please'.","Per favore"],[93,"Select the Italian word for 'water'.","Acqua"],[94,"Select the Japanese word for 'cat'.","猫"],[95,"Select the Japanese word for 'dog'.","犬"],[96,"Select the Japanese word for 'happy'.","幸せ"],[97,"Select the Japanese word for 'mother'.","お母さん"],[98,"Select the Japanese word for 'mountain'.","山"],[99,"Select the Japanese word for 'thank you'.","ありがとう"],[100,"Select the Korean word for 'apple'.","사과"],[101,"Select the Korean word for 'coffee'.","커피"],[102,"Select the Korean word for 'friend'.","친구"],[103,"Select the Korean word for 'moon'.","달"],[104,"Select the Korean word for 'snow'.","눈"],[105,"Select the Korean word for 'water'.","물"],[106,"Select the Malay word for 'car'.","Kereta"],[107,"Select the Malay word for 'cat'.","Kucing"],[108,"Select the Norwegian word for 'goodbye'.","Ha det"],[109,"Select the Norwegian word for 'hello'.","Hei"],[110,"Select the Norwegian word for 'thank you'.","Takk"],[111,"Select the Norwegian word for 'yes'.","Ja"],[112,"Select the Persian word for 'hello'.","سلام"],[113,"Select the Polish word for 'bread'.","Chleb"],[114,"Select the Polish word for 'family'.","Rodzina"],[115,"Select the Polish word for 'friend'.","Przyjaciel"],[116,"Select the Polish word for 'good morning'.","Dzień dobry"],[117,"Select the Polish word for 'thank you'.","Dziękuję"],[118,"Select the Polish word for 'water'.","Woda"],[119,"Select the Portuguese word for 'beautiful'.","Bonita"],[120,"Select the Portuguese word for 'coffee'.","Café"],[121,"Select the Portuguese word for 'good night'.","Boa noite"],[122,"Select the Portuguese word for 'hello'.","Olá"],[123,"Select the Portuguese word for 'please'.","Por favor"],[124,"Select the Portuguese word for 'world'.","Mundo"],[125,"Select the Russian word for 'cat'.","Кошка"],[126,"Select the Russian word for 'hello'.","Привет"],[127,"Select the Russian word for 'sun'.","Солнце"],[128,"Select the Russian word for 'thank you'.","Спасибо"],[129,"Select the Slovenian word for 'hello'.","Živjo"],[130,"Select the Spanish word for 'chair'.","Silla"],[131,"Select the Spanish word for 'dog'.","Perro"],[132,"Select the Spanish word for 'fire'.","Fuego"],[133,"Select the Spanish word for 'friend'.","Amigo"],[134,"Select the Spanish word for 'good night'.","Buenas noches"],[135,"Select the Spanish word for 'hello'.","Hola"],[136,"Select the Spanish word for 'hello'.","Wabing, Hola"],[137,"Select the Spanish word for 'red'.","Rojo"],[138,"Select the Spanish word for 'sun'.","Sol"],[139,"Select the Swahili word for 'good'.","Nzuri"],[140,"Select the Swahili word for 'thank you'.","Asante"],[141,"Select the Swedish word for 'goodbye'.","Hej då"],[142,"Select the Swedish word for 'house'.","Hus"],[143,"Select the Swedish word for 'milk'.","Mjölk"],[144,"Select the Swedish word for 'thank you'.","Tack"],[145,"Select the Swedish word for 'water'.","Vatten"],[146,"Select the Swedish word for 'welcome'.","Välkommen"],[147,"Select the Swedish word for 'yes'.","Ja"],[148,"Select the Tagalog word for 'good morning'.","Magandang umaga"],[149,"Select the Thai word for 'hello'.","สวัสดี"],[150,"Select the Thai word for 'thank you'.","ขอบคุณ"],[151,"Select the Turkish word for 'dog'.","Köpek"],[152,"Select the Turkish word for 'friend'.","Arkadaş"],[153,"Select the Turkish word for 'hello'.","Merhaba"],[154,"Select the Ukrainian word for 'thank you'.","Дякую"],[155,"Select the Ukrainian word for 'yellow'.","Жовтий"],[156,"Select the Vietnamese word for 'egg'.","Trứng"],[157,"Select the Vietnamese word for 'friend'.","Bạn bè"],[158,"Select the Vietnamese word for 'house'.","Nhà"],[159,"Select the Vietnamese word for 'thank you'.","Cảm ơn"],[160,"Select the Welsh word for 'thank you'.","Diolch"],[161,"Skip one day — lose your streak. Lose a match — lose...","Trophies"],[162,"Usually, how many goals must be scored to win in 'Brawl Ball'?","2"],[163,"Welcome...","to Starr Park"],[164,"What is the name of Jessie's turret?","Scrappy"],[165,"What is the name of the famous French bread?","Baguette"],[166,"What is the native language of the largest number of people in the world?","Chinese Chinese"],[167,"What is the official language of Brazil?","Portuguese"],[168,"What language's writing system is called 'Hangul'?","Korean"],[169,"What must be destroyed in 'Heist'?","The enemy safe"],[170,"What was Rico's previous name?","Ricochet"],[171,"Which Brawler calls a bear when using Super?","Nita"],[172,"Which Brawler fights using a baseball bat?","Bibi"],[173,"Which Brawler fights using a shovel?","Mortis"],[174,"Which Brawler fires rockets?","Brock"],[175,"Which Brawler is a cactus?","Spike"],[176,"Which Brawler is the starting Brawler?","Shelly"],[177,"Which Brawler places a healing turret when using Super?","Pam"],[178,"Which Brawler plays the guitar?","Poco"],[179,"Which Brawler rolls forward in a barrel when using Super?","Darryl"],[180,"Which Brawler throws sticks of dynamite?","Dynamike"],[181,"Which is a Finnish food?","Karjalanpiirakka (Karelian pie)"],[182,"Which of these is an actual Spanish word?","Zapato"],[183,"Which of these languages uses the Cyrillic alphabet?","Russian"],[184,"Which one is the English word for 'house'?","House"],[185,"Which one means 'bookshelf' in Finnish?","Kirjahylly"],[186,"Which one means 'chicken' in Indonesian?","Ayam"],[187,"Which one means 'house' in German?","Schule"],[188,"Which one means 'house' in Turkish?","Ev"],[189,"Which one means 'one' in Japanese?","一"],[190,"Which one means 'one' in Spanish?","Uno"],[191,"Which one means 'one' in Swedish?","Ett"],[192,"Which one means 'phone' in Korean?","전화"],[193,"Which one means 'school' in Indonesian?","Sekolah"],[194,"Which one means 'tea' in Chinese?","茶"],[195,"Which one of these is a traditional Japanese dish?","Sushi"],[196,"Who is Melody's main rival?","Janet"],[197,"Who wrote on the Velocirapto Park pool?","Chester"],[198,"Passing take' from Duolingo","Wow!"]]};
+
     // State Aplikasi (Default: English)
     let currentLang = "English"; 
-    let dataID = [];
-    let dataEN = [];
+    let dataID = DEFAULT_DATA.Indonesia;
+    let dataEN = DEFAULT_DATA.English;
 
-    // Dijalankan saat DOM Ready
+    // Daftar nama bahasa untuk auto-highlighting di pertanyaan
+    const LANGUAGES = [
+      "Indonesia", "Inggris", "Prancis", "Spanyol", "Rusia", "Turki", "Mandarin", 
+      "Korea", "Finlandia", "Slovenia", "Wabing", "Jepang", "Italia", "Arab", 
+      "Polandia", "Belanda", "Hungaria", "Ibrani", "Islandia", "Swahili", "Wales", 
+      "Portugis", "Tagalog", "Hawaii", "Hindi", "Norwegia", "Irlandia", "Persia", 
+      "Thailand", "Ukraina", "Melayu", "English", "German", "French", "Spanish", 
+      "Russian", "Turkish", "Chinese", "Japanese", "Italian", "Arabic", "Polish", 
+      "Dutch", "Hungarian", "Hebrew", "Icelandic", "Portuguese", "Swedish", 
+      "Greek", "Vietnamese", "Welsh", "Thai"
+    ];
+
+    // Regex Dinamis untuk Nama Bahasa & Kata di Dalam Petik
+    const langRegex = new RegExp(`\\b(${LANGUAGES.join("|")})\\b`, "gi");
+    const quoteRegex = /(['"ʿ‘«“].*?['"ʾ’»”])/g;
+
     document.addEventListener("DOMContentLoaded", async () => {
-      // 1. Coba load kedua data dari LocalStorage terlebih dahulu
+      // 1. Coba load dari LocalStorage
       const localID = localStorage.getItem(KEY_ID);
       const localEN = localStorage.getItem(KEY_EN);
 
@@ -104,54 +141,49 @@
         try { dataEN = JSON.parse(localEN); } catch(e){}
       }
 
-      // Jika ada data di LocalStorage, tampilkan langsung secara instan
-      if ((dataID && dataID.length > 0) || (dataEN && dataEN.length > 0)) {
-        updateStatus("Displaying cached data from LocalStorage.");
-        renderResults();
-      }
+      renderResults();
 
-      // 2. Fetch data terbaru di background dan timpa LocalStorage
+      // 2. Sync background dari API
       await fetchAndSyncData();
     });
 
-    // Ambil data terbaru dari API Spreadsheet
     async function fetchAndSyncData() {
       updateStatus("Syncing data from Spreadsheet...");
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
 
-        console.log("Raw Response dari API:", data);
-
-        // Jika respons berupa Objek { Indonesia: [...], English: [...] }
         if (data && (data.Indonesia || data.English)) {
-          dataID = data.Indonesia || [];
-          dataEN = data.English || [];
+          dataID = data.Indonesia || DEFAULT_DATA.Indonesia;
+          dataEN = data.English || DEFAULT_DATA.English;
 
-          // Simpan masing-masing array ke key terpisah di LocalStorage
           localStorage.setItem(KEY_ID, JSON.stringify(dataID));
           localStorage.setItem(KEY_EN, JSON.stringify(dataEN));
 
           updateStatus("Data synced and saved to separate LocalStorage keys.");
           renderResults();
-        } else if (data && data.error) {
-          updateStatus("Server Error: " + data.error);
         }
       } catch (err) {
-        console.error("Fetch Error:", err);
-        if (localStorage.getItem(KEY_ID) || localStorage.getItem(KEY_EN)) {
-          updateStatus("Offline mode. Using cached LocalStorage data.");
-        } else {
-          updateStatus("Failed to load data from server.");
-        }
+        console.warn("Fetch Error (Using fallback data):", err);
+        updateStatus("Displaying local/cached data.");
       }
     }
 
-    // Render Hasil Pencarian / Tampilkan Semua Data Bahasa Aktif
+    // Format Teks Pertanyaan
+    function formatQuestion(qText) {
+      if (!qText) return "";
+      
+      // Highlight Kata di Dalam Petik (Merah)
+      let formatted = qText.replace(quoteRegex, `<span class="highlight-quote">$1</span>`);
+      
+      // Highlight Nama Bahasa (Biru)
+      formatted = formatted.replace(langRegex, `<span class="highlight-lang">$1</span>`);
+      
+      return formatted;
+    }
+
     function renderResults() {
       const keyword = document.getElementById("search").value.toLowerCase().trim();
-      
-      // Pilih sumber data sesuai bahasa yang aktif saat ini
       const activeData = (currentLang === "English") ? dataEN : dataID;
       const resultsEl = document.getElementById("results");
 
@@ -160,8 +192,11 @@
         return;
       }
 
-      // Filter data: Jika keyword kosong, ambil SEMUA baris
-      const filtered = activeData.filter(row => {
+      // Filter Data
+      const filtered = activeData.filter((row, index) => {
+        // Lewati Header jika ada
+        if (row[0] === "#" || row[1] === "Question" || row[1] === "Pertanyaan") return false;
+        
         if (!keyword) return true;
         return row.some(cell => String(cell).toLowerCase().includes(keyword));
       });
@@ -172,16 +207,20 @@
         return;
       }
 
-      // Render daftar baris
+      // Render Hasil dengan Penjelasan Visual Berwarna
       resultsEl.innerHTML = filtered
-        .map(r => `<li>${r.filter(Boolean).join(" - ")}</li>`)
+        .map(r => {
+          const num = r[0] ? `<span class="num">${r[0]}.</span> ` : "";
+          const question = formatQuestion(r[1] || "");
+          const answer = r[2] ? `<span class="ans-text">${r[2]}</span>` : "";
+          
+          return `<li>${num}<span class="q-text">${question}</span> ${answer ? '— ' + answer : ''}</li>`;
+        })
         .join("");
     }
 
-    // Event Listener: Instant Search saat mengetik
     document.getElementById("search").addEventListener("input", renderResults);
 
-    // Event Listener: Toggle Bahasa (Switch data & UI)
     document.getElementById("langToggle").addEventListener("click", function() {
       if (currentLang === "English") {
         currentLang = "Indonesia";
@@ -192,8 +231,6 @@
         this.innerText = "Language: English";
         document.getElementById("search").placeholder = "Type keyword...";
       }
-      
-      // Render ulang seluruh isi list menggunakan data bahasa baru
       renderResults();
     });
 
