@@ -290,27 +290,30 @@
     // Daftar Bahasa & Negara
     const LANGUAGES = [
       "Indonesia", "Inggris", "Prancis", "Spanyol", "Rusia", "Turki", "Mandarin", 
-      "Korea", "Finlandia", "Slovenia", "Wabing", "Jepang", "Italia", "Arab", 
+      "Korea", "Finlandia", "Slovenia", "Wabing", "Wabinglish", "Jepang", "Italia", "Arab", 
       "Polandia", "Belanda", "Hungaria", "Ibrani", "Islandia", "Swahili", "Wales", 
-      "Portugis", "Tagalog", "Hawaii", "Hindi", "Norwegia", "Irlandia", "Persia", 
+      "Portugis", "Tagalog", "Hawaii", "Hawaiian", "Hindi", "Norwegia", "Irlandia", "Persia", "Farsi",
       "Thailand", "Ukraina", "Melayu", "Brasil", "Brazil", "Yunani", "Swedia", "Jerman", "Vietnam",
       "English", "German", "French", "Spanish", "Russian", "Turkish", "Chinese", 
       "Japanese", "Italian", "Arabic", "Polish", "Dutch", "Hungarian", "Hebrew", 
       "Icelandic", "Portuguese", "Swedish", "Greek", "Vietnamese", "Welsh", "Thai",
-      "Finnish", "Indonesian", "Irish", "Korean", "Malay", "Norwegian", "Persian", "Slovenian", "Ukrainian"
+      "Finnish", "Indonesian", "Irish", "Korean", "Malay", "Norwegian", "Persian", "Slovenian", "Ukrainian",
+      "Hangui", "Hangul", "Cyrillic"
     ];
 
     // Daftar Brawler & Karakter
     const BRAWLERS = [
       "Spike", "Gene", "Rico", "Ricochet", "Edgar", "Mortis", "Dynamike", "Shelly", 
-      "Brock", "Nita", "Bibi", "Poco", "Pam", "Darryl", "Chester", "Melody", 
+      "Brock", "Nita", "Bibi", "Poco", "Pam", "Darryl", "Chester", "Melody", "Melodie", 
       "Janet", "Jessie", "Duo", "Scrappy", "Cordelius", "Lily", "Trunk"
     ];
 
     // Regex Dinamis
     const langRegex = new RegExp(`\\b(${LANGUAGES.join("|")})\\b`, "gi");
     const brawlerRegex = new RegExp(`\\b(${BRAWLERS.join("|")})\\b`, "gi");
-    const quoteRegex = /(['"ʿ‘«“].*?['"ʾ’»”])/g;
+    
+    // Regex Kutipan: Menjaga seluruh teks pengapit + isi teks secara presisi tanpa merubah karakter
+    const quoteRegex = /(?:"{1,2}|'{1,2}|[ʿ‘«“]{1,2})(.*?)(?:"{1,2}|'{1,2}|[ʾ’»”]{1,2})/g;
 
     const searchInput = document.getElementById("search");
     const clearBtn = document.getElementById("clearSearch");
@@ -368,9 +371,17 @@
     // Format Teks Pertanyaan (Highlighting)
     function formatQuestion(qText) {
       if (!qText) return "";
-      let formatted = String(qText).replace(quoteRegex, `<span class="highlight-quote">$1</span>`);
+      let formatted = String(qText);
+      
+      // Highlight Kutipan (Merah) - Tampilkan persis apa adanya tanpa modifikasi teks
+      formatted = formatted.replace(quoteRegex, `<span class="highlight-quote">$&</span>`);
+      
+      // Highlight Bahasa (Biru)
       formatted = formatted.replace(langRegex, `<span class="highlight-lang">$1</span>`);
+      
+      // Highlight Brawler (Ungu)
       formatted = formatted.replace(brawlerRegex, `<span class="highlight-brawler">$1</span>`);
+      
       return formatted;
     }
 
