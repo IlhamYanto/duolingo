@@ -19,13 +19,18 @@
       margin-bottom: 15px;
       gap: 10px;
     }
+    .header-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .title-wrapper h2 {
       margin: 0;
       font-size: 1.5rem;
     }
 
-    /* Styling Tombol Toggle Bahasa Responsive */
-    .toggle-btn {
+    /* Styling Tombol Toggle Bahasa Responsive & Refresh */
+    .toggle-btn, .refresh-btn {
       padding: 8px 14px;
       cursor: pointer;
       font-weight: bold;
@@ -37,11 +42,25 @@
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
     }
-    .toggle-btn:hover {
+    .toggle-btn:hover, .refresh-btn:hover {
       background-color: #007bff;
       color: #fff;
+    }
+    
+    /* Animasi Putar Tombol Refresh */
+    .refresh-icon {
+      display: inline-block;
+      transition: transform 0.5s ease;
+    }
+    .refresh-btn.spinning .refresh-icon {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
     }
 
     /* Versi Teks Lengkap Desktop & Ringkas Mobile */
@@ -56,7 +75,7 @@
       .lang-text-short {
         display: inline;
       }
-      .toggle-btn {
+      .toggle-btn, .refresh-btn {
         padding: 6px 10px;
         font-size: 0.9rem;
       }
@@ -220,10 +239,17 @@
     <div class="title-wrapper">
       <h2 id="appTitle">Duolingo Answer Keys</h2>
     </div>
-    <button id="langToggle" class="toggle-btn">
-      <span class="lang-text-full">Language: English</span>
-      <span class="lang-text-short">🇬🇧 EN</span>
-    </button>
+    <div class="header-buttons">
+      <!-- Tombol Sync Data Manual -->
+      <button id="refreshBtn" class="refresh-btn" title="Sync Data from Spreadsheet">
+        <span class="refresh-icon">🔄</span>
+      </button>
+      <!-- Tombol Toggle Bahasa -->
+      <button id="langToggle" class="toggle-btn">
+        <span class="lang-text-full">Language: English</span>
+        <span class="lang-text-short">🇬🇧 EN</span>
+      </button>
+    </div>
   </div>
 
   <!-- Search Box dengan Tombol X Clear Lebar -->
@@ -292,6 +318,7 @@
     const bottomAction = document.getElementById("bottomAction");
     const btnSearchAgain = document.getElementById("btnSearchAgain");
     const langToggleBtn = document.getElementById("langToggle");
+    const refreshBtn = document.getElementById("refreshBtn");
 
     document.addEventListener("DOMContentLoaded", async () => {
       // 1. Load dari LocalStorage
@@ -307,12 +334,15 @@
 
       renderResults();
 
-      // 2. Sync background dari API
+      // 2. Sync background dari API saat awal load
       await fetchAndSyncData();
     });
 
+    // Fungsi Fetch & Sync Data ke LocalStorage
     async function fetchAndSyncData() {
       updateStatus("Syncing data from Spreadsheet...");
+      refreshBtn.classList.add("spinning");
+
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
@@ -330,6 +360,8 @@
       } catch (err) {
         console.warn("Fetch Error (Using fallback data):", err);
         updateStatus("Displaying local/cached data.");
+      } finally {
+        setTimeout(() => refreshBtn.classList.remove("spinning"), 500);
       }
     }
 
@@ -342,7 +374,7 @@
       return formatted;
     }
 
-    // Fungsi Reset Search
+    // Fungsi Reset Search & Fokus Input
     function clearSearch() {
       searchInput.value = "";
       searchInput.focus();
@@ -413,13 +445,20 @@
     // Listener Input Search
     searchInput.addEventListener("input", renderResults);
 
-    // Shortcut Keyboard ENTER pada Input Search untuk Clear
-    searchInput.addEventListener("keydown", (e) => {
+    // Global Event Keyboard: Menekan Enter di luar atau di dalam input akan mereset & memfokuskan ke input
+    document.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
+        // Bebaskan fokus dari tombol jika ada yang sedang aktif agar tidak tertekan ulang
+        if (document.activeElement && document.activeElement.tagName === "BUTTON") {
+          document.activeElement.blur();
+        }
         e.preventDefault();
         clearSearch();
       }
     });
+
+    // Listener Tombol Refresh Manual
+    refreshBtn.addEventListener("click", fetchAndSyncData);
 
     // Listener Tombol Clear Top (X)
     clearBtn.addEventListener("click", clearSearch);
