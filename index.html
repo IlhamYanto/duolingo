@@ -312,8 +312,9 @@
     const langRegex = new RegExp(`\\b(${LANGUAGES.join("|")})\\b`, "gi");
     const brawlerRegex = new RegExp(`\\b(${BRAWLERS.join("|")})\\b`, "gi");
     
-    // Regex Kutipan: Menjaga seluruh teks pengapit + isi teks secara presisi tanpa merubah karakter
-    const quoteRegex = /(?:"{1,2}|'{1,2}|[ʿ‘«“]{1,2})(.*?)(?:"{1,2}|'{1,2}|[ʾ’»”]{1,2})/g;
+    // REGEX KUTIPAN PERBAIKAN:
+    // Mengabaikan apostrof tengah kata (seperti What's, doesn't, he's) dengan pengecekan batas huruf (?<!\w) dan (?!\w)
+    const quoteRegex = /(?:"{1,2}|(?<!\w)'{1,2}|[ʿ‘«“]{1,2})(.*?)(?:"{1,2}|'{1,2}(?!\w)|[ʾ’»”]{1,2})/g;
 
     const searchInput = document.getElementById("search");
     const clearBtn = document.getElementById("clearSearch");
@@ -373,7 +374,7 @@
       if (!qText) return "";
       let formatted = String(qText);
       
-      // Highlight Kutipan (Merah) - Tampilkan persis apa adanya tanpa modifikasi teks
+      // Highlight Kutipan (Merah) - Tampilkan persis apa adanya tanpa merubah/menghapus karakter
       formatted = formatted.replace(quoteRegex, `<span class="highlight-quote">$&</span>`);
       
       // Highlight Bahasa (Biru)
