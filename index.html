@@ -301,12 +301,13 @@
       "Hangui", "Hangul", "Cyrillic"
     ];
 
-    // Daftar Brawler, Karakter & Mode Game (Ungu)
+    // Daftar Brawler, Karakter, Mode Game & Lokasi/Park (Ungu)
     const BRAWLERS = [
       "Spike", "Gene", "Rico", "Ricochet", "Edgar", "Mortis", "Dynamike", "Shelly", 
       "Brock", "Nita", "Bibi", "Poco", "Pam", "Darryl", "Chester", "Melody", "Melodie", 
       "Janet", "Jessie", "Duo", "Scrappy", "Cordelius", "Lily", "Trunk",
-      "Gem Grab", "Brawl Ball", "Solo Showdown", "Brawlers", "Heist"
+      "Gem Grab", "Brawl Ball", "Solo Showdown", "Brawler", "Brawlers", "Heist",
+      "Velocirapids", "Velociraptor Park"
     ];
 
     // Regex Dinamis
@@ -381,7 +382,7 @@
       // Highlight Bahasa (Biru)
       formatted = formatted.replace(langRegex, `<span class="highlight-lang">$1</span>`);
       
-      // Highlight Brawler & Mode Game (Ungu)
+      // Highlight Brawler, Mode Game & Taman/Lokasi (Ungu)
       formatted = formatted.replace(brawlerRegex, `<span class="highlight-brawler">$1</span>`);
       
       return formatted;
