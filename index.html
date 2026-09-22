@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 650px;
+      max-width: 700px;
       margin: 30px auto;
       padding: 0 15px;
       color: #333;
@@ -301,11 +301,12 @@
       "Hangui", "Hangul", "Cyrillic"
     ];
 
-    // Daftar Brawler & Karakter
+    // Daftar Brawler, Karakter & Mode Game (Ungu)
     const BRAWLERS = [
       "Spike", "Gene", "Rico", "Ricochet", "Edgar", "Mortis", "Dynamike", "Shelly", 
       "Brock", "Nita", "Bibi", "Poco", "Pam", "Darryl", "Chester", "Melody", "Melodie", 
-      "Janet", "Jessie", "Duo", "Scrappy", "Cordelius", "Lily", "Trunk"
+      "Janet", "Jessie", "Duo", "Scrappy", "Cordelius", "Lily", "Trunk",
+      "Gem Grab", "Brawl Ball", "Solo Showdown", "Brawlers", "Heist"
     ];
 
     // Regex Dinamis
@@ -380,7 +381,7 @@
       // Highlight Bahasa (Biru)
       formatted = formatted.replace(langRegex, `<span class="highlight-lang">$1</span>`);
       
-      // Highlight Brawler (Ungu)
+      // Highlight Brawler & Mode Game (Ungu)
       formatted = formatted.replace(brawlerRegex, `<span class="highlight-brawler">$1</span>`);
       
       return formatted;
